@@ -15,12 +15,12 @@
 using namespace std;
 
 const int populationSize = 10;
-const int simulationSteps = 45;
+const int simulationSteps = 65;
 const int generations = 10;
 const float maxMutationProbability = 0.005;
-const float income = 1.74;
+const float income = 1.71;
 const int allowedMutations[5] = {1,5,10,100};
-const int resetTime = 30;
+const int resetTime = 60;
 
 mutex bestSoFar_mu, keepRunning_mu, timerRunnin_mu, allTimeBest_mu;
 SingleBarrierStrategy *bestSoFar = nullptr;
@@ -47,7 +47,7 @@ void simulate(int freedom, int threadID)
         if(next->getFitness() < bestSoFar->getFitness())
         {
             cout << "Best protects " << next->getFitness() << " cells!";
-            cout << " Found after " << setw(4) << mutationCounter << " mutations.";
+            cout << " Found after " << setw(2) << mutationCounter << " mutations.";
             cout << " by thread " << threadID;
 //            cout << " [";
 //            if(next->isBlocked()) cout << "un";
@@ -131,7 +131,7 @@ void startTimer(vector<thread*> *threads, int seconds)
             timerRunnin_mu.lock();
             running = timerRunning;
             timerRunnin_mu.unlock();
-            if(running == false) break;
+            if(running == false) return;
             if(seconds-i <= 3)
                 cout << "-- reset in " << seconds-i << " --" << endl;
             Sleep((DWORD)(1000));
@@ -217,7 +217,6 @@ int main()
 
         if(in == 't')
         {
-
             if(timerRunning)
             {
                 stopTimer(timer);
