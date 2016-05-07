@@ -41,6 +41,7 @@ class SingleBarrierStrategy
         void mutate();
         void increaseMutationProb(long maxMutationProb);
         bool enclosesFire();
+        inline bool isBlocked() {return _barrierBlocked;}
 
         inline int getFitness() {return _fitness;}
 
@@ -58,6 +59,7 @@ class SingleBarrierStrategy
         int _startX;
         int _startY;
         float _income;
+        bool _barrierBlocked = false;
         default_random_engine _generator;
 };
 

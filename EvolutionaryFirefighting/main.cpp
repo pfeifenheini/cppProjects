@@ -15,16 +15,18 @@
 using namespace std;
 
 const int populationSize = 10;
-const int simulationSteps = 100;
+const int simulationSteps = 50;
 const int generations = 10;
 const float maxMutationProbability = 0.005;
 const float income = 1.75;
+const int allowedMutations[5] = {1,5,10,100};
+const int resetTime = 20;
 
-mutex bestSoFar_mu, running_mu, reset_mu;
+mutex bestSoFar_mu, keepRunning_mu, timerRunnin_mu;
 SingleBarrierStrategy *bestSoFar = nullptr;
 
 bool keepRunning = true;
-bool reset = false;
+bool timerRunning = false;
 
 void simulate(int freedom, int threadID)
 {
@@ -33,9 +35,9 @@ void simulate(int freedom, int threadID)
     bestSoFar_mu.unlock();
 
     int mutationCounter = 0;
-    running_mu.lock();
+    keepRunning_mu.lock();
     bool running = keepRunning;
-    running_mu.unlock();
+    keepRunning_mu.unlock();
     while(running)
     {
 
@@ -45,8 +47,11 @@ void simulate(int freedom, int threadID)
         if(next->getFitness() < bestSoFar->getFitness())
         {
             cout << "Best protects " << next->getFitness() << " cells!";
-            cout << " Found after " << setw(4) << mutationCounter << " mutations";
+            cout << " Found after " << setw(4) << mutationCounter << " mutations.";
             cout << " by thread " << threadID;
+//            cout << " [";
+//            if(next->isBlocked()) cout << "un";
+//            cout << "blocked]";
             if(bestSoFar->enclosesFire())
                 cout << " --> Fire enclosed <--";
             cout << endl;
@@ -69,22 +74,99 @@ void simulate(int freedom, int threadID)
         mutationCounter++;
         next->simulate(false);
 
-        running_mu.lock();
+        keepRunning_mu.lock();
         running = keepRunning;
-        running_mu.unlock();
+        keepRunning_mu.unlock();
     }
 
     delete next;
+}
+
+void stopThreads(vector<thread*> *threads)
+{
+    keepRunning_mu.lock();
+    keepRunning = false;
+    keepRunning_mu.unlock();
+
+    for(auto it = threads->begin();it != threads->end();it++)
+    {
+        (*it)->join();
+    }
+}
+
+void reset(vector<thread*> *threads)
+{
+    stopThreads(threads);
+
+    keepRunning = true;
+
+    delete bestSoFar;
+    bestSoFar = new SingleBarrierStrategy(maxMutationProbability,simulationSteps,income);
+
+    int threadID = 1;
+    for(auto it = threads->begin();it != threads->end();it++)
+    {
+        (*it) = new thread(simulate,allowedMutations[threadID-1],threadID);
+        threadID++;
+    }
+}
+
+void startTimer(vector<thread*> *threads, int seconds)
+{
+    cout << "-- start timer --" << endl;
+    timerRunnin_mu.lock();
+    bool running = timerRunning;
+    timerRunnin_mu.unlock();
+    bool enclosingFound = false;
+    while(running)
+    {
+        for(int i=0;i<seconds;i++)
+        {
+            timerRunnin_mu.lock();
+            running = timerRunning;
+            timerRunnin_mu.unlock();
+            if(running == false) break;
+            if(seconds-i <= 3)
+                cout << "-- reset in " << seconds-i << " --" << endl;
+            Sleep((DWORD)(1000));
+        }
+        cout << "-- reset (timer) --" << endl;
+
+        bestSoFar_mu.lock();
+        enclosingFound = bestSoFar->enclosesFire();
+        bestSoFar_mu.unlock();
+        if(enclosingFound) break;
+
+        reset(threads);
+    }
+}
+
+void stopTimer(thread* timer)
+{
+    timerRunnin_mu.lock();
+    timerRunning = false;
+    timerRunnin_mu.unlock();
+
+    timer->join();
+    delete timer;
+    cout << "-- timer stopped --" << endl;
 }
 
 int main()
 {
     bestSoFar = new SingleBarrierStrategy(maxMutationProbability,simulationSteps,income);
 
-    thread *t1 = new thread(simulate,1,1);
-    thread *t2 = new thread(simulate,5,2);
-    thread *t3 = new thread(simulate,10,3);
-    thread *t4 = new thread(simulate,100,4);
+    thread *t1 = new thread(simulate,allowedMutations[0],1);
+    thread *t2 = new thread(simulate,allowedMutations[1],2);
+    thread *t3 = new thread(simulate,allowedMutations[2],3);
+    thread *t4 = new thread(simulate,allowedMutations[3],4);
+    vector<thread*> *threads = new vector<thread*>(4);
+    threads->at(0) = t1;
+    threads->at(1) = t2;
+    threads->at(2) = t3;
+    threads->at(3) = t4;
+
+    thread *timer = nullptr;
 
     char in = getch();
     while(in != 'x')
@@ -98,40 +180,35 @@ int main()
         }
         if(in == 's')
         {
-            cout << "best so far: " << endl;
+            cout << "-- best so far --" << endl;
             bestSoFar->printFinal();
         }
         bestSoFar_mu.unlock();
 
         if(in == 'r')
         {
-            keepRunning = false;
+            cout << "-- reset --" << endl;
+            if(timerRunning)
+                stopTimer(timer);
+            reset(threads);
+        }
 
-            t1->join();
-            t2->join();
-            t3->join();
-            t4->join();
+        if(in == 't')
+        {
 
-            keepRunning = true;
-
-            delete bestSoFar;
-            bestSoFar = new SingleBarrierStrategy(maxMutationProbability,simulationSteps,income);
-
-            t1 = new thread(simulate,1,1);
-            t2 = new thread(simulate,5,2);
-            t3 = new thread(simulate,10,3);
-            t4 = new thread(simulate,100,4);
+            if(timerRunning)
+            {
+                stopTimer(timer);
+            }
+            else
+            {
+                timerRunning = true;
+                timer = new thread(startTimer,threads,resetTime);
+            }
         }
 
         in = getch();
     }
 
-    running_mu.lock();
-    keepRunning = false;
-    running_mu.unlock();
-
-    t1->join();
-    t2->join();
-    t3->join();
-    t4->join();
+    stopThreads(threads);
 }

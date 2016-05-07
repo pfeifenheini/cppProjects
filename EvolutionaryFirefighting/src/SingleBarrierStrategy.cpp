@@ -38,6 +38,7 @@ SingleBarrierStrategy::SingleBarrierStrategy(SingleBarrierStrategy *parent)
     _startY = parent->_startY;
     _simulationSteps = parent->_simulationSteps;
     _income = parent->_income;
+    _barrierBlocked = parent->_barrierBlocked;
     _mutationProb = parent->_mutationProb;
     _grid = new GridWorld(2*_simulationSteps+1);
     _strategyDNA = new vector<Gene>(parent->_strategyDNA->begin(),parent->_strategyDNA->end());
@@ -63,6 +64,7 @@ void SingleBarrierStrategy::copyStrategy(SingleBarrierStrategy* toCopy)
     _startY = toCopy->_startY;
     _simulationSteps = toCopy->_simulationSteps;
     _income = toCopy->_income;
+    _barrierBlocked = toCopy->_barrierBlocked;
     _mutationProb = toCopy->_mutationProb;
     *_strategyDNA = *(toCopy->_strategyDNA);
     simulate(false);
@@ -110,6 +112,7 @@ void SingleBarrierStrategy::simulate(bool printSteps)
                 curr = &barrierBack;
             }
             currentDir = currentGene.direction;
+            _barrierBlocked = true;
             for(int tries=0; tries < 8; tries++)
             {
                 x = curr->x+currentDir.horizontalDirection();
@@ -120,6 +123,8 @@ void SingleBarrierStrategy::simulate(bool printSteps)
                     curr->y = y;
                     budget -= 1;
                     stepsDone++;
+                    if(!_barrierBlocked)
+                        _barrierBlocked = false;
                     break;
                 }
                 if(currentGene.extendFront)
