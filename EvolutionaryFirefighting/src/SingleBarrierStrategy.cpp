@@ -33,6 +33,7 @@ SingleBarrierStrategy::SingleBarrierStrategy(
 
 SingleBarrierStrategy::SingleBarrierStrategy(SingleBarrierStrategy *parent)
 {
+    if(parent == nullptr) cout << "fuck";
     _startX = parent->_startX;
     _startY = parent->_startY;
     _simulationSteps = parent->_simulationSteps;

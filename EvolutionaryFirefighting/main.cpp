@@ -17,73 +17,83 @@ const int populationSize = 10;
 const int simulationSteps = 25;
 const int generations = 10;
 const float maxMutationProbability = 0.01;
-const float income = 1.99999999;
+const float income = 2;
 
-void initialization()
+mutex bestSoFar_mu, running_mu, reset_mu;
+SingleBarrierStrategy *bestSoFar = nullptr;
+
+bool keepRunning = true;
+bool reset = false;
+
+void simulate(int freedom, int threadID)
 {
-
-}
-
-void evaluation()
-{
-
-}
-
-void selection()
-{
-
-}
-
-void recombination()
-{
-
-}
-
-void mutation()
-{
-
-}
-
-
-int main()
-{
-    SingleBarrierStrategy *bestSoFar = new SingleBarrierStrategy(maxMutationProbability,simulationSteps,income);
+    bestSoFar_mu.lock();
     SingleBarrierStrategy *next = new SingleBarrierStrategy(bestSoFar);
-    bestSoFar->print();
-    next->print();
+    bestSoFar_mu.unlock();
+
     int tries = 0;
-    while(true)
+    bool running = keepRunning;
+    while(running)
     {
-        if(kbhit())
-        {
-            char in = getch();
-            if(in == 'x') break;
-            if(in == 'r')
-            {
-                delete bestSoFar;
-                delete next;
-                bestSoFar = new SingleBarrierStrategy(maxMutationProbability,simulationSteps,income);
-                next = new SingleBarrierStrategy(bestSoFar);
-            }
-        }
+
 //        cout << next->getFitness() << " vs. " << bestSoFar->getFitness() << endl;
 //        Sleep(100);
+        bestSoFar_mu.lock();
         if(next->getFitness() < bestSoFar->getFitness())
         {
+            cout << "thread " << threadID << " succeeds" << endl;
             delete bestSoFar;
             bestSoFar = new SingleBarrierStrategy(next);
             bestSoFar->print();
             tries = 0;
 
-            Sleep(1000);
+            Sleep(500);
         }
-        if(tries > 100)
+        if(freedom != 0)
         {
-            delete next;
-            next = new SingleBarrierStrategy(bestSoFar);
+            tries++;
+            if(tries > freedom && freedom != 0)
+            {
+                delete next;
+                next = new SingleBarrierStrategy(bestSoFar);
+            }
         }
+        bestSoFar_mu.unlock();
 
         next->mutate();
         next->simulate();
+
+        running_mu.lock();
+        running = keepRunning;
+        running_mu.unlock();
     }
+}
+
+int main()
+{
+    bestSoFar = new SingleBarrierStrategy(maxMutationProbability,simulationSteps,income);
+
+    thread t1(simulate,0,1);
+    thread t2(simulate,0,2);
+    thread t3(simulate,100,3);
+    thread t4(simulate,1000,4);
+
+    char in = getch();
+    while(in != 'x')
+    {
+        in = getch();
+        if(in == 'r')
+        {
+        }
+    }
+
+    running_mu.lock();
+    keepRunning = false;
+    running_mu.unlock();
+
+    t1.join();
+    t2.join();
+    t3.join();
+    t4.join();
+
 }
