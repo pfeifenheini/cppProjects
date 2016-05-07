@@ -28,7 +28,7 @@ SingleBarrierStrategy::SingleBarrierStrategy(
     _income = income;
 //    _mutationProb = randMutationProb(_generator);
     _mutationProb = maxMutationProb;
-    simulate();
+    simulate(false);
 }
 
 SingleBarrierStrategy::SingleBarrierStrategy(SingleBarrierStrategy *parent)
@@ -41,7 +41,7 @@ SingleBarrierStrategy::SingleBarrierStrategy(SingleBarrierStrategy *parent)
     _mutationProb = parent->_mutationProb;
     _grid = new GridWorld(2*_simulationSteps+1);
     _strategyDNA = new vector<Gene>(parent->_strategyDNA->begin(),parent->_strategyDNA->end());
-    simulate();
+    simulate(false);
 }
 
 
@@ -65,10 +65,10 @@ void SingleBarrierStrategy::copyStrategy(SingleBarrierStrategy* toCopy)
     _income = toCopy->_income;
     _mutationProb = toCopy->_mutationProb;
     *_strategyDNA = *(toCopy->_strategyDNA);
-    simulate();
+    simulate(false);
 }
 
-void SingleBarrierStrategy::simulate()
+void SingleBarrierStrategy::simulate(bool printSteps)
 {
     _grid->reset();
     _grid->igniteCenter();
@@ -78,7 +78,7 @@ void SingleBarrierStrategy::simulate()
     Gene currentGene;
     Direction currentDir;
     Cell *curr;
-    int x,y;
+    int x,y, stepsDone = 1;
     Cell barrierFront;
     Cell barrierBack;
     barrierFront.x = _startX;
@@ -88,8 +88,14 @@ void SingleBarrierStrategy::simulate()
 
     for(int step=0; step < _simulationSteps; step++)
     {
-//        cout << "sim step: " << step << endl;
-//        _grid->printGrid();
+        if(printSteps)
+        {
+            cout << "-----------" << endl;
+            cout << "step: [" << step << "], " << stepsDone << " new cells protected" << endl;
+            _grid->printGrid();
+            Sleep(300);
+            stepsDone = 0;
+        }
 
         while(budget >= 1 && geneIT != _strategyDNA->end())
         {
@@ -112,6 +118,7 @@ void SingleBarrierStrategy::simulate()
                     curr->x = x;
                     curr->y = y;
                     budget -= 1;
+                    stepsDone++;
                     break;
                 }
                 if(currentGene.extendFront)
@@ -124,7 +131,6 @@ void SingleBarrierStrategy::simulate()
                 }
             }
             geneIT++;
-
         }
         budget+=_income;
 
@@ -156,7 +162,23 @@ void SingleBarrierStrategy::increaseMutationProb(long maxMutationProb)
 
 }
 
-void SingleBarrierStrategy::print()
+void SingleBarrierStrategy::printFinal()
 {
     _grid->printGrid();
 }
+
+
+void SingleBarrierStrategy::printSteps()
+{
+    simulate(true);
+}
+
+bool SingleBarrierStrategy::enclosesFire()
+{
+    int num = _grid->getBurningCells();
+    _grid->spreadFire(0);
+    if( num == _grid->getBurningCells())
+        return true;
+    return false;
+}
+

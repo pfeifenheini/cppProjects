@@ -14,7 +14,7 @@
 using namespace std;
 
 const int populationSize = 10;
-const int simulationSteps = 30;
+const int simulationSteps = 50;
 const int generations = 10;
 const float maxMutationProbability = 0.01;
 const float income = 1.8;
@@ -41,12 +41,14 @@ void simulate(int freedom, int threadID)
         bestSoFar_mu.lock();
         if(next->getFitness() < bestSoFar->getFitness())
         {
-            cout << "thread " << threadID << " succeeds" << endl;
-            delete bestSoFar;
-            bestSoFar = new SingleBarrierStrategy(next);
-            bestSoFar->print();
+            cout << "best protects " << next->getFitness() << " cells!";
+            if(bestSoFar->enclosesFire())
+                cout << " Fire enclosed!!!";
+            cout << endl;
+            bestSoFar->copyStrategy(next);
+//            bestSoFar->printFinal();
             tries = 0;
-            Sleep(500);
+//            Sleep(500);
         }
         if(freedom != 0)
         {
@@ -59,7 +61,7 @@ void simulate(int freedom, int threadID)
         bestSoFar_mu.unlock();
 
         next->mutate();
-        next->simulate();
+        next->simulate(false);
 
         running_mu.lock();
         running = keepRunning;
@@ -79,10 +81,21 @@ int main()
     char in = getch();
     while(in != 'x')
     {
-        in = getch();
-        if(in == 'r')
+        bestSoFar_mu.lock();
+        if(in == 'a')
         {
+            cout << "-- start animation" << endl;
+            bestSoFar->printSteps();
+            cout << "-- continue search --" << endl;
         }
+        if(in == 's')
+        {
+            cout << "best so far: ";
+            bestSoFar->printFinal();
+        }
+        bestSoFar_mu.unlock();
+
+        in = getch();
     }
 
     running_mu.lock();
@@ -93,5 +106,4 @@ int main()
     t2.join();
     t3.join();
     t4.join();
-
 }

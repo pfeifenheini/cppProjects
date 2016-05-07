@@ -8,6 +8,8 @@
 #include <time.h>
 #include <math.h>
 
+#include <mingw.thread.h>
+
 #include <Direction.h>
 #include <GridWorld.h>
 
@@ -35,13 +37,15 @@ class SingleBarrierStrategy
 
         void copyStrategy(SingleBarrierStrategy *toCopy);
 
-        void simulate();
+        void simulate(bool printSteps);
         void mutate();
         void increaseMutationProb(long maxMutationProb);
+        bool enclosesFire();
 
         inline int getFitness() {return _fitness;}
 
-        void print();
+        void printFinal();
+        void printSteps();
 
     protected:
 
