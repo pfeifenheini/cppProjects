@@ -3,13 +3,14 @@
 
 #include <vector>
 #include <queue>
+#include <random>
+
+#include <time.h>
 #include <math.h>
 
 #include <Direction.h>
+#include <GridWorld.h>
 
-#define EMPTY 0
-#define PROTECTED 1
-#define BURNING 2
 
 struct Gene
 {
@@ -17,37 +18,41 @@ struct Gene
     Direction direction;
 };
 
-struct Coords
-{
-    int x;
-    int y;
-};
-
 class SingleBarrierStrategy
 {
     public:
-        SingleBarrierStrategy(long maxMutationProb, int simulationSteps);
-        SingleBarrierStrategy(SingleBarrierStrategy father, SingleBarrierStrategy mother);
+        SingleBarrierStrategy(
+                              float maxMutationProb,
+                              int simulationSteps,
+                              float income
+                              );
+        SingleBarrierStrategy(SingleBarrierStrategy *parent);
+        SingleBarrierStrategy(
+                              SingleBarrierStrategy *father,
+                              SingleBarrierStrategy *mother
+                              );
         virtual ~SingleBarrierStrategy();
 
-        void evaluate(int simulationSteps);
+        void simulate();
         void mutate();
         void increaseMutationProb(long maxMutationProb);
 
-        inline int getFitness() {return fitness;}
+        inline int getFitness() {return _fitness;}
+
+        void print();
 
     protected:
 
     private:
-        std::vector<Gene> *strategyDNA;
-        int fitness;
-        long mutationProb;
-        int startX;
-        int startY;
-        long income 2.0;
-        Coords barrierFront;
-        Coords barrierBack;
-        queue<Coords> burningEdgeCells;
+        int _simulationSteps;
+        GridWorld *_grid;
+        std::vector<Gene> *_strategyDNA;
+        int _fitness;
+        float _mutationProb;
+        int _startX;
+        int _startY;
+        float _income;
+        default_random_engine _generator;
 };
 
 #endif // SINGLEBARRIERSTRATEGY_H
