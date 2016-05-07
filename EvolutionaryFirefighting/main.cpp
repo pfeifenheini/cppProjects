@@ -14,10 +14,10 @@
 using namespace std;
 
 const int populationSize = 10;
-const int simulationSteps = 25;
+const int simulationSteps = 30;
 const int generations = 10;
 const float maxMutationProbability = 0.01;
-const float income = 2;
+const float income = 1.8;
 
 mutex bestSoFar_mu, running_mu, reset_mu;
 SingleBarrierStrategy *bestSoFar = nullptr;
@@ -46,7 +46,6 @@ void simulate(int freedom, int threadID)
             bestSoFar = new SingleBarrierStrategy(next);
             bestSoFar->print();
             tries = 0;
-
             Sleep(500);
         }
         if(freedom != 0)
@@ -54,8 +53,7 @@ void simulate(int freedom, int threadID)
             tries++;
             if(tries > freedom && freedom != 0)
             {
-                delete next;
-                next = new SingleBarrierStrategy(bestSoFar);
+                next->copyStrategy(bestSoFar);
             }
         }
         bestSoFar_mu.unlock();
@@ -74,7 +72,7 @@ int main()
     bestSoFar = new SingleBarrierStrategy(maxMutationProbability,simulationSteps,income);
 
     thread t1(simulate,0,1);
-    thread t2(simulate,0,2);
+    thread t2(simulate,10,2);
     thread t3(simulate,100,3);
     thread t4(simulate,1000,4);
 

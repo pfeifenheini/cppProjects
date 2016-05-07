@@ -33,6 +33,8 @@ class SingleBarrierStrategy
                               );
         virtual ~SingleBarrierStrategy();
 
+        void copyStrategy(SingleBarrierStrategy *toCopy);
+
         void simulate();
         void mutate();
         void increaseMutationProb(long maxMutationProb);

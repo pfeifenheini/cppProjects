@@ -16,6 +16,7 @@ struct Cell
     int x;
     int y;
     int state;
+    int fireTime;
 };
 
 class GridWorld
@@ -25,10 +26,10 @@ class GridWorld
         virtual ~GridWorld();
 
         bool isOnGrid(int x, int y);
-        int ignite(int x, int y);
+        int ignite(int x, int y, int time);
         int igniteCenter();
         int protect(int x, int y);
-        void spreadFire();
+        void spreadFire(int time);
         void reset();
         void printGrid();
 

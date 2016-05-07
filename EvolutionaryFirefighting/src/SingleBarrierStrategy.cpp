@@ -56,6 +56,18 @@ SingleBarrierStrategy::~SingleBarrierStrategy()
     delete _grid;
 }
 
+void SingleBarrierStrategy::copyStrategy(SingleBarrierStrategy* toCopy)
+{
+    if(toCopy == nullptr) cout << "fuck";
+    _startX = toCopy->_startX;
+    _startY = toCopy->_startY;
+    _simulationSteps = toCopy->_simulationSteps;
+    _income = toCopy->_income;
+    _mutationProb = toCopy->_mutationProb;
+    *_strategyDNA = *(toCopy->_strategyDNA);
+    simulate();
+}
+
 void SingleBarrierStrategy::simulate()
 {
     _grid->reset();
@@ -116,7 +128,7 @@ void SingleBarrierStrategy::simulate()
         }
         budget+=_income;
 
-        _grid->spreadFire();
+        _grid->spreadFire(step+1);
     }
     _fitness = _grid->getBurningCells();
 }

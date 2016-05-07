@@ -42,12 +42,13 @@ inline bool GridWorld::isOnGrid(int x, int y)
 }
 
 // returns 1 it cell has changed state and 0 else
-int GridWorld::ignite(int x, int y)
+int GridWorld::ignite(int x, int y, int time)
 {
     if(isOnGrid(x,y))
         if(_grid->at(x)->at(y).state == EMPTY)
         {
             _grid->at(x)->at(y).state = BURNING;
+            _grid->at(x)->at(y).fireTime = time;
             _burningEdgeCells->push(_grid->at(x)->at(y));
             _burningCellsEdge++;
             _burningCellsTotal++;
@@ -58,7 +59,7 @@ int GridWorld::ignite(int x, int y)
 
 int GridWorld::igniteCenter()
 {
-    return ignite((int)_dimension/2,(int)_dimension/2);
+    return ignite((int)_dimension/2,(int)_dimension/2,0);
 }
 
 
@@ -74,7 +75,7 @@ int GridWorld::protect(int x, int y)
     return 0;
 }
 
-void GridWorld::spreadFire()
+void GridWorld::spreadFire(int time)
 {
     Cell c;
     int currentEdgeSize = _burningCellsEdge;
@@ -82,10 +83,10 @@ void GridWorld::spreadFire()
     for(int i=0;i<currentEdgeSize;i++)
     {
         c = _burningEdgeCells->front();
-        ignite(c.x+1,c.y);
-        ignite(c.x,c.y+1);
-        ignite(c.x-1,c.y);
-        ignite(c.x,c.y-1);
+        ignite(c.x+1,c.y,time);
+        ignite(c.x,c.y+1,time);
+        ignite(c.x-1,c.y,time);
+        ignite(c.x,c.y-1,time);
         _burningEdgeCells->pop();
         _burningCellsEdge--;
     }
@@ -99,6 +100,7 @@ void GridWorld::reset()
         for(int j=0;j<_dimension;j++)
         {
             _grid->at(i)->at(j).state = EMPTY;
+            _grid->at(i)->at(j).fireTime = 0;
         }
     }
     delete _burningEdgeCells;
@@ -109,24 +111,48 @@ void GridWorld::reset()
 
 void GridWorld::printGrid()
 {
-    int state;
+    int minX=_dimension, minY=_dimension, maxX=0, maxY=0;
+    int state, fireTime;
+
     for(int i=0;i<_dimension;i++)
     {
         for(int j=0;j<_dimension;j++)
         {
             state = _grid->at(j)->at(_dimension-1-i).state;
+            if(state != EMPTY)
+            {
+                if(i<minX) minX = i;
+                if(j<minY) minY = j;
+                if(i>maxX) maxX = i;
+                if(j>maxY) maxY = j;
+            }
+        }
+    }
+
+    for(int i=minX;i<=maxX;i++)
+    {
+        for(int j=minY;j<=maxY;j++)
+        {
+            state = _grid->at(j)->at(_dimension-1-i).state;
+            fireTime = _grid->at(j)->at(_dimension-1-i).fireTime;
+
+            if(i==(int)(_dimension/2) && j==(int)(_dimension/2))
+            {
+                cout << "Z" << " ";
+                continue;
+            }
+
             switch(state)
             {
             case BURNING:
-                cout << "X" << " ";
+                cout << fireTime%10 << " ";
                 break;
             case PROTECTED:
-                cout << "O" << " ";
+                cout << "X" << " ";
                 break;
             default:
-                cout << " " << " ";
+                cout << "  ";
             };
-
         }
         cout << endl;
     }
