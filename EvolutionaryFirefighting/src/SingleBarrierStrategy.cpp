@@ -88,6 +88,7 @@ void SingleBarrierStrategy::simulate(bool printSteps)
 
     for(int step=0; step < _simulationSteps; step++)
     {
+        int burningNow = _grid->getBurningCells();
         if(printSteps)
         {
             cout << "-----------" << endl;
@@ -135,6 +136,19 @@ void SingleBarrierStrategy::simulate(bool printSteps)
         budget+=_income;
 
         _grid->spreadFire(step+1);
+
+        if(_grid->getBurningCells() == burningNow)
+        {
+            if(printSteps)
+            {
+                cout << "-----------" << endl;
+                cout << "step: [" << step << "], " << stepsDone << " new cells protected" << endl;
+                _grid->printGrid();
+                Sleep(300);
+                stepsDone = 0;
+            }
+            break;
+        }
     }
     _fitness = _grid->getBurningCells();
 }
