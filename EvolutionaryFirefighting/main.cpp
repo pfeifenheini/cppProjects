@@ -15,15 +15,16 @@
 using namespace std;
 
 const int populationSize = 10;
-const int simulationSteps = 50;
+const int simulationSteps = 45;
 const int generations = 10;
 const float maxMutationProbability = 0.005;
-const float income = 1.75;
+const float income = 1.74;
 const int allowedMutations[5] = {1,5,10,100};
-const int resetTime = 20;
+const int resetTime = 30;
 
-mutex bestSoFar_mu, keepRunning_mu, timerRunnin_mu;
+mutex bestSoFar_mu, keepRunning_mu, timerRunnin_mu, allTimeBest_mu;
 SingleBarrierStrategy *bestSoFar = nullptr;
+SingleBarrierStrategy *allTimeBest = nullptr;
 
 bool keepRunning = true;
 bool timerRunning = false;
@@ -40,7 +41,6 @@ void simulate(int freedom, int threadID)
     keepRunning_mu.unlock();
     while(running)
     {
-
 //        cout << next->getFitness() << " vs. " << bestSoFar->getFitness() << endl;
 //        Sleep(100);
         bestSoFar_mu.lock();
@@ -59,6 +59,12 @@ void simulate(int freedom, int threadID)
 //            bestSoFar->printFinal();
             mutationCounter = 0;
 //            Sleep(500);
+            allTimeBest_mu.lock();
+            if(bestSoFar->getFitness() < allTimeBest->getFitness())
+            {
+                allTimeBest->copyStrategy(bestSoFar);
+            }
+            allTimeBest_mu.unlock();
         }
         if(freedom != 0)
         {
@@ -130,13 +136,13 @@ void startTimer(vector<thread*> *threads, int seconds)
                 cout << "-- reset in " << seconds-i << " --" << endl;
             Sleep((DWORD)(1000));
         }
-        cout << "-- reset (timer) --" << endl;
 
         bestSoFar_mu.lock();
         enclosingFound = bestSoFar->enclosesFire();
         bestSoFar_mu.unlock();
         if(enclosingFound) break;
 
+        cout << "-- reset (timer) --" << endl;
         reset(threads);
     }
 }
@@ -155,6 +161,7 @@ void stopTimer(thread* timer)
 int main()
 {
     bestSoFar = new SingleBarrierStrategy(maxMutationProbability,simulationSteps,income);
+    allTimeBest = new SingleBarrierStrategy(bestSoFar);
 
     thread *t1 = new thread(simulate,allowedMutations[0],1);
     thread *t2 = new thread(simulate,allowedMutations[1],2);
@@ -183,6 +190,21 @@ int main()
             cout << "-- best so far --" << endl;
             bestSoFar->printFinal();
         }
+
+        allTimeBest_mu.lock();
+        if(in == 'w')
+        {
+            cout << "-- all time best --" << endl;
+            allTimeBest->printFinal();
+        }
+
+        if(in == 'q')
+        {
+            cout << "-- start animation" << endl;
+            allTimeBest->printSteps();
+            cout << "-- continue search --" << endl;
+        }
+        allTimeBest_mu.unlock();
         bestSoFar_mu.unlock();
 
         if(in == 'r')

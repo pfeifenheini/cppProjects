@@ -138,7 +138,7 @@ void GridWorld::printGrid()
 
             if(i==(int)(_dimension/2) && j==(int)(_dimension/2))
             {
-                cout << "Z" << " ";
+                cout << "S" << " ";
                 continue;
             }
 
