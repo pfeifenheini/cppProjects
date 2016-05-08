@@ -40,10 +40,11 @@ class SingleBarrierStrategy
         void simulate(bool printSteps);
         void mutate();
         void increaseMutationProb(long maxMutationProb);
-        bool enclosesFire();
+        inline bool enclosesFire() {return _enclosesFire;}
         inline bool isBlocked() {return _barrierBlocked;}
 
         inline int getFitness() {return _fitness;}
+        inline int stepsNeeded() {return _stepsNeeded;}
 
         void printFinal();
         void printSteps();
@@ -52,6 +53,7 @@ class SingleBarrierStrategy
 
     private:
         int _simulationSteps;
+        int _stepsNeeded;
         GridWorld *_grid;
         std::vector<Gene> *_strategyDNA;
         int _fitness;
@@ -60,6 +62,7 @@ class SingleBarrierStrategy
         int _startY;
         float _income;
         bool _barrierBlocked = false;
+        bool _enclosesFire;
         default_random_engine _generator;
 };
 

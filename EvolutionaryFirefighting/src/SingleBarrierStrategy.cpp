@@ -22,7 +22,7 @@ SingleBarrierStrategy::SingleBarrierStrategy(
     }
 
     _startX = simulationSteps-1;
-    _startY = simulationSteps-1;
+    _startY = simulationSteps;
 
     _simulationSteps = simulationSteps;
     _income = income;
@@ -81,24 +81,28 @@ void SingleBarrierStrategy::simulate(bool printSteps)
     Direction currentDir;
     Cell *curr;
     int x,y, stepsDone = 1;
+    _stepsNeeded = 0;
     Cell barrierFront;
     Cell barrierBack;
     barrierFront.x = _startX;
     barrierFront.y = _startY;
     barrierBack.x = _startX;
     barrierBack.y = _startY;
+    _enclosesFire = false;
 
     for(int step=0; step < _simulationSteps; step++)
     {
         int burningNow = _grid->getBurningCells();
+
         if(printSteps)
         {
             cout << "-----------" << endl;
-            cout << "step: [" << step << "], " << stepsDone << " new cells protected" << endl;
+            cout << "step: [" << step << "/" << _simulationSteps << "], " << stepsDone << " new cells protected" << endl;
             _grid->printGrid();
             Sleep(300);
             stepsDone = 0;
         }
+        _stepsNeeded = step;
 
         while(budget >= 1 && geneIT != _strategyDNA->end())
         {
@@ -147,11 +151,13 @@ void SingleBarrierStrategy::simulate(bool printSteps)
             if(printSteps)
             {
                 cout << "-----------" << endl;
-                cout << "step: [" << step << "], " << stepsDone << " new cells protected" << endl;
+                cout << "step: [" << step+1 << "/" << _simulationSteps << "], " << stepsDone << " new cells protected" << endl;
                 _grid->printGrid();
                 Sleep(300);
                 stepsDone = 0;
             }
+            _stepsNeeded = step+1;
+            _enclosesFire = true;
             break;
         }
     }
@@ -184,20 +190,16 @@ void SingleBarrierStrategy::increaseMutationProb(long maxMutationProb)
 void SingleBarrierStrategy::printFinal()
 {
     _grid->printGrid();
+    int steps = _stepsNeeded;
+    if(!_enclosesFire) steps++;
+    cout << steps << " steps needed";
+    if(_enclosesFire) cout << " [enclosed] ";
+    cout << endl;
 }
 
 
 void SingleBarrierStrategy::printSteps()
 {
     simulate(true);
-}
-
-bool SingleBarrierStrategy::enclosesFire()
-{
-    int num = _grid->getBurningCells();
-    _grid->spreadFire(0);
-    if( num == _grid->getBurningCells())
-        return true;
-    return false;
 }
 

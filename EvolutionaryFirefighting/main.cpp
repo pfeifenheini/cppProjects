@@ -15,19 +15,20 @@
 using namespace std;
 
 const int populationSize = 10;
-const int simulationSteps = 65;
+const int simulationSteps = 25;
 const int generations = 10;
 const float maxMutationProbability = 0.005;
-const float income = 1.71;
+const float income = 1.85; //enclosed at 1.67 after 52 steps
 const int allowedMutations[5] = {1,5,10,100};
-const int resetTime = 60;
+const int resetTime = 10;
 
-mutex bestSoFar_mu, keepRunning_mu, timerRunnin_mu, allTimeBest_mu;
+mutex bestSoFar_mu, keepRunning_mu, timerRunnin_mu, allTimeBest_mu, resetTimer_mu;
 SingleBarrierStrategy *bestSoFar = nullptr;
 SingleBarrierStrategy *allTimeBest = nullptr;
 
 bool keepRunning = true;
 bool timerRunning = false;
+bool resetTimer = false;
 
 void simulate(int freedom, int threadID)
 {
@@ -46,16 +47,16 @@ void simulate(int freedom, int threadID)
         bestSoFar_mu.lock();
         if(next->getFitness() < bestSoFar->getFitness())
         {
-            cout << "Best protects " << next->getFitness() << " cells!";
-            cout << " Found after " << setw(2) << mutationCounter << " mutations.";
-            cout << " by thread " << threadID;
+            cout << "current best: " << next->getFitness() << " cells on fire!";
+//            cout << " Found after " << setw(2) << mutationCounter << " mutations,";
+//            cout << " by thread " << threadID;
 //            cout << " [";
 //            if(next->isBlocked()) cout << "un";
 //            cout << "blocked]";
-            if(bestSoFar->enclosesFire())
-                cout << " --> Fire enclosed <--";
-            cout << endl;
             bestSoFar->copyStrategy(next);
+            if(bestSoFar->enclosesFire())
+                cout << " --> Fire enclosed after " << bestSoFar->stepsNeeded() << "/" << simulationSteps << " steps <--";
+            cout << endl;
 //            bestSoFar->printFinal();
             mutationCounter = 0;
 //            Sleep(500);
@@ -65,6 +66,9 @@ void simulate(int freedom, int threadID)
                 allTimeBest->copyStrategy(bestSoFar);
             }
             allTimeBest_mu.unlock();
+            resetTimer_mu.lock();
+            resetTimer = true;
+            resetTimer_mu.unlock();
         }
         if(freedom != 0)
         {
@@ -123,7 +127,7 @@ void startTimer(vector<thread*> *threads, int seconds)
     timerRunnin_mu.lock();
     bool running = timerRunning;
     timerRunnin_mu.unlock();
-    bool enclosingFound = false;
+//    bool enclosingFound = false;
     while(running)
     {
         for(int i=0;i<seconds;i++)
@@ -131,16 +135,25 @@ void startTimer(vector<thread*> *threads, int seconds)
             timerRunnin_mu.lock();
             running = timerRunning;
             timerRunnin_mu.unlock();
+
+            resetTimer_mu.lock();
+            if(resetTimer)
+            {
+                resetTimer = false;
+                i=0;
+            }
+            resetTimer_mu.unlock();
+
             if(running == false) return;
             if(seconds-i <= 3)
                 cout << "-- reset in " << seconds-i << " --" << endl;
             Sleep((DWORD)(1000));
         }
 
-        bestSoFar_mu.lock();
-        enclosingFound = bestSoFar->enclosesFire();
-        bestSoFar_mu.unlock();
-        if(enclosingFound) break;
+//        bestSoFar_mu.lock();
+//        enclosingFound = bestSoFar->enclosesFire();
+//        bestSoFar_mu.unlock();
+//        if(enclosingFound) break;
 
         cout << "-- reset (timer) --" << endl;
         reset(threads);
@@ -210,8 +223,11 @@ int main()
         if(in == 'r')
         {
             cout << "-- reset --" << endl;
-            if(timerRunning)
-                stopTimer(timer);
+
+            resetTimer_mu.lock();
+            resetTimer = true;
+            resetTimer_mu.unlock();
+
             reset(threads);
         }
 
@@ -230,6 +246,10 @@ int main()
 
         in = getch();
     }
+
+    cout << "-- all time best --" << endl;
+    allTimeBest->printFinal();
+    cout << "income = " << income << ", simulation steps = " << simulationSteps << ", timer = " << resetTime << "s" << endl;
 
     stopThreads(threads);
 }
