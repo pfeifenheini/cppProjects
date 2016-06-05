@@ -16,38 +16,20 @@
  * Programming Assignment: D
  * Evolutionary Algorithm
  *
- * compile with:
- * g++ -std=c++11 main.cpp -o main
+ * compile with (linux):
+ *  g++ -std=c++11 main.cpp -o main
+ * run with (linux):
+ *  ./main
  *
- * run with 'java CellularAutomaton'
- *
- * Usage:
- * Choose the initial pattern in the dialogue box.
- * Possible choices:
- *  - Blinker
- *  - Glider
- *  - r-Pentamino
- *  - Glider Gun
- *  - Random
- *
- * Click 'OK' to start the simulation.
- *
- * A file named 'LogFile.txt' is created, containing per
- * line the number of living cells at each time.
- *
- * Problems:
- * It is possible that the scene will not show every
- * intermediate step. That behavior was observed under
- * a Linus OS, but not Windows.
- * Is this the case, run the program as
- *
- *  'java CellularAutomaton slow'
- *
- * to increase the time delay between the animation
- * steps
- *
- * Exit:
- * Just close the window.
+ * We were supposed to implement an evolutionary algorithm to maximize a certain
+ * objective function. I chose the Hosaki from the lecture, but there were two problems:
+ * 1. The definition on the slides is different from the definition I found on the web.
+ * The difference being whether the argument of the exponential function is -x1 or -x2
+ * 2. In any case the objective function has no upper bound. That means the program
+ * might not terminate or at least take a very long time. Since we learned that the
+ * Hosaki function is a test function for minimization algorithms, the program calculates
+ * the minimum instead of the maximum.
+ * In this case, the program can find successfully the two minima at (4,2) and (1,2).
  *
  */
 
@@ -184,7 +166,7 @@ int main()
 
 
     }
-    cout << "fittnes: ind0 = " << population[0].fitness << ", ind1 = " << population[1].fitness << endl;
+    cout << "fittnes:" << population[0].fitness << ", " << population[1].fitness << endl;
     printStatus(population);
 
     return 0;
