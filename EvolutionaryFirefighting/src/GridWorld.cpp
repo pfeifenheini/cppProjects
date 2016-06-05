@@ -3,9 +3,10 @@
 GridWorld::GridWorld(int dimension)
 {
     vector<vector<Cell>* > *grid = new vector<vector<Cell>* >(dimension);
-    for(int i=0;i<dimension;i++)
+//    for(int i=0;i<dimension;i++)
+    for(auto it = grid->begin();it != grid->end();it++)
     {
-        grid->at(i) = new vector<Cell>(dimension);
+        *it = new vector<Cell>(dimension);
     }
 
 
@@ -67,11 +68,21 @@ int GridWorld::igniteCenter()
 int GridWorld::protect(int x, int y)
 {
         if(isOnGrid(x,y))
-        if(_grid->at(x)->at(y).state == EMPTY)
         {
-            _grid->at(x)->at(y).state = PROTECTED;
-            return 1;
+            if(_grid->at(x)->at(y).state == EMPTY)
+            {
+                _grid->at(x)->at(y).state = PROTECTED;
+                return 1;
+            }
+//            if(_grid->at(x)->at(y).state == BURNING && x != (int)(_dimension/2) && y != (int)(_dimension/2))
+//            if(_grid->at(x)->at(y).state == BURNING)
+//            {
+//                _grid->at(x)->at(y).state = PROTECTED;
+//                _burningCellsTotal--;
+//                return 1;
+//            }
         }
+
     return 0;
 }
 
@@ -111,7 +122,7 @@ void GridWorld::reset()
 
 void GridWorld::printGrid()
 {
-    int minX=_dimension, minY=_dimension, maxX=0, maxY=0;
+    int minX=_dimension-1, minY=_dimension-1, maxX=0, maxY=0;
     int state, fireTime;
 
     for(int i=0;i<_dimension;i++)

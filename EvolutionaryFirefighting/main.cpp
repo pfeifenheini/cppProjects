@@ -15,10 +15,10 @@
 using namespace std;
 
 const int populationSize = 10;
-const int simulationSteps = 25;
+const int simulationSteps = 80;
 const int generations = 10;
 const float maxMutationProbability = 0.005;
-const float income = 1.85; //enclosed at 1.67 after 52 steps
+const float income = 1.6; //enclosed at 1.67 after 52 steps
 const int allowedMutations[5] = {1,5,10,100};
 const int resetTime = 10;
 

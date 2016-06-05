@@ -19,6 +19,8 @@ SingleBarrierStrategy::SingleBarrierStrategy(
     {
         (*it).extendFront = (bool)randFrontEnd(_generator);
         (*it).direction = randDirection(_generator);
+//        (*it).extendFront = true;
+//        (*it).direction = EAST;
     }
 
     _startX = simulationSteps-1;
@@ -162,6 +164,7 @@ void SingleBarrierStrategy::simulate(bool printSteps)
         }
     }
     _fitness = _grid->getBurningCells();
+
 }
 
 void SingleBarrierStrategy::mutate()
